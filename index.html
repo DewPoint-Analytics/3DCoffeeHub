@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Coffee Hub · Coffee Shop Strategy</title>
+<meta name="description" content="Walk around a 3D coffee shop where every station holds a finding from 15 runs of the Coffee Shop Inc. simulation.">
+<meta property="og:title" content="Virtual Café · Coffee Shop Strategy">
+<meta property="og:description" content="Walk around a 3D coffee shop where every station holds a finding from 15 simulation runs.">
+<meta property="og:image" content="https://dewpoint-analytics.github.io/coffee-strategy-dashboard/banner.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<script data-goatcounter="https://shabcoffee.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+:root{--bg:#f5f1ea;--paper:#fffdfa;--ink:#171513;--muted:#746d65;--line:#ded6cb;--espresso:#211611;--copper:#b65f36;--caramel:#d99857;--sage:#6c846f;--teal:#3f7774;--coral:#b95f59;--cream:#f0e5d6;--gain:#2f6f9f;--loss:#c2502f}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1c1410;color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0}
+canvas{display:block;outline:none}
+.top{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 22px;z-index:5;pointer-events:none;background:linear-gradient(#1c1410cc,#1c141000)}
+.brand{pointer-events:auto;display:flex;flex-direction:column;color:#f6efe6;text-decoration:none}
+.brand small{font:700 11px 'DM Sans';letter-spacing:.22em;text-transform:uppercase;color:var(--caramel)}
+.brand b{font:600 clamp(20px,2.6vw,30px)/1.1 'Playfair Display',serif;margin-top:4px}
+.brand b i{color:var(--caramel)}
+.back{pointer-events:auto;color:#f6efe6;text-decoration:none;font:600 14px 'DM Sans';border:1px solid rgba(246,239,230,.35);border-radius:999px;padding:9px 16px;background:rgba(255,255,255,.06);white-space:nowrap}
+.back:hover{background:rgba(255,255,255,.14)}
+.pin{position:fixed;left:0;top:0;z-index:4;transform:translate(-50%,-50%);border:0;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0;background:none;font:600 13px 'DM Sans';color:var(--ink)}
+.pin .n{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--paper);color:var(--copper);font:700 14px 'DM Sans';box-shadow:0 0 0 4px rgba(182,95,54,.35),0 6px 18px rgba(0,0,0,.35);position:relative}
+.pin .n::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(217,152,87,.8);animation:ping 2.4s ease-out infinite}
+.pin .t{background:rgba(255,253,250,.94);padding:6px 11px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transform:translateX(-6px);transition:.2s}
+.pin:hover .t,.pin:focus-visible .t,.pin.on .t{opacity:1;transform:none}
+.pin.on .n{background:var(--copper);color:#fff}
+.pin:focus-visible{outline:none}.pin:focus-visible .n{outline:3px solid #fff;outline-offset:3px}
+@keyframes ping{0%{transform:scale(1);opacity:.9}80%,100%{transform:scale(1.7);opacity:0}}
+.panel{position:fixed;z-index:6;right:22px;top:92px;bottom:96px;width:min(410px,calc(100vw - 44px));background:var(--paper);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.45);padding:0;overflow:hidden;display:flex;flex-direction:column;transform:translateX(calc(100% + 40px));transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.panel.open{transform:none}
+.pscroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:26px 26px 22px}
+.panel .x{position:absolute;right:14px;top:14px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--paper);cursor:pointer;font-size:18px;color:var(--muted)}
+.kick{font:700 11px 'DM Sans';letter-spacing:.2em;text-transform:uppercase;color:var(--copper)}
+.panel h2{font:600 28px/1.12 'Playfair Display',serif;margin:8px 40px 10px 0}
+.panel h2 em{color:var(--copper)}
+.lede{font-size:15.5px;line-height:1.55;color:#3d3731;margin:0 0 16px}
+.chart{background:var(--bg);border-radius:14px;padding:14px 14px 10px;margin:0 0 14px}
+.chart h4{margin:0 0 10px;font:700 11px 'DM Sans';letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.chart svg{width:100%;height:auto;display:block}
+.facts{list-style:none;padding:0;margin:0 0 16px;display:grid;gap:8px}
+.facts li{display:flex;gap:10px;font-size:14px;line-height:1.45;color:#3d3731}
+.facts li::before{content:"";flex:0 0 8px;height:8px;margin-top:6px;border-radius:2px;background:var(--copper)}
+.note{font-size:12.5px;color:var(--muted);line-height:1.5;border-top:1px solid var(--line);padding-top:10px;margin:0}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+.btn{border:0;border-radius:999px;padding:11px 18px;font:600 14px 'DM Sans';cursor:pointer;background:var(--cream);color:var(--ink)}
+.btn.primary{background:var(--espresso);color:#f6efe6}
+.btn:focus-visible{outline:3px solid var(--copper);outline-offset:2px}
+.dock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:8px;background:rgba(255,253,250,.94);border-radius:999px;padding:8px;box-shadow:0 14px 40px rgba(0,0,0,.35);max-width:calc(100vw - 24px)}
+.dock .btn{padding:9px 14px}
+.dots{display:flex;gap:6px;padding:0 4px}
+.dots button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper);font:700 12px 'DM Sans';color:var(--muted);cursor:pointer}
+.dots button.on{background:var(--copper);border-color:var(--copper);color:#fff}
+.hint{position:fixed;left:22px;bottom:30px;z-index:4;color:#f1e6d8;font-size:13px;opacity:.85;max-width:260px;line-height:1.4}
+.loader{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:#1c1410;color:#f6efe6;transition:opacity .6s}
+.loader.hide{visibility:hidden;transition:opacity .6s,visibility 0s .6s;opacity:0;pointer-events:none}
+.loader div{text-align:center;font:600 22px 'Playfair Display',serif}
+.loader span{display:block;margin-top:8px;font:500 13px 'DM Sans';color:var(--caramel);letter-spacing:.18em;text-transform:uppercase}
+.fallback{display:none;position:fixed;inset:0;overflow:auto;background:var(--bg);padding:90px 20px 40px;z-index:3}
+.fallback.show{display:block}
+.fallback .grid{max-width:900px;margin:0 auto;display:grid;gap:16px}
+.fallback article{background:var(--paper);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:760px){
+ .panel{left:12px;right:12px;width:auto;top:auto;bottom:84px;max-height:52vh;box-shadow:0 -6px 24px rgba(0,0,0,.28);transform:translateY(calc(100% + 110px))}
+.pscroll{padding:22px 20px 18px}
+ .panel h2{font-size:23px}
+ .hint{display:none}
+ .dock{bottom:12px}.dock .btn.lbl{display:none}
+ .dots button{width:28px;height:28px}
+ .pin .t{display:none}
+ .top{padding:12px 14px}
+ .brand small{font-size:9.5px;letter-spacing:.16em}.back{padding:8px 12px;font-size:12.5px}
+}
+@media (prefers-reduced-motion:reduce){.pin .n::after{animation:none}.panel{transition:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="stage" aria-hidden="true"></div>
+<header class="top">
+ <a class="brand" href="./"><small>Coffee Shop Strategy</small><b>The virtual <i>café</i></b></a>
+ <a class="back" href="https://dewpoint-analytics.github.io/coffee-strategy-dashboard/?ref=cafe">Full dashboard ↗</a>
+</header>
+<div class="hint" id="hint">Drag to look around · scroll or pinch to zoom · tap a numbered pin to visit a station</div>
+<aside class="panel" id="panel" aria-live="polite" aria-labelledby="pTitle">
+ <button class="x" id="close" aria-label="Close and look around">×</button>
+ <div class="pscroll" id="pScroll">
+ <div class="kick" id="pKick"></div>
+ <h2 id="pTitle"></h2>
+ <p class="lede" id="pLede"></p>
+ <div class="chart" id="pChart"></div>
+ <ul class="facts" id="pFacts"></ul>
+ <p class="note" id="pNote"></p>
+ <div class="nav"><button class="btn" id="prev">← Previous</button><button class="btn primary" id="next">Next stop →</button></div>
+ </div>
+</aside>
+<nav class="dock" aria-label="Café tour">
+ <button class="btn lbl" id="tour">Start the tour</button>
+ <div class="dots" id="dots"></div>
+ <button class="btn lbl" id="free">Look around</button>
+</nav>
+<div class="loader" id="loader"><div>Brewing the café…<span>Coffee Shop Strategy</span></div></div>
+<section class="fallback" id="fallback"><div class="grid" id="fbGrid"></div></section>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------------- Content: every figure is from my own runs ---------------- */
+const SRC='Source: own runs of Coffee Shop Inc. (Sim Institute / Harvard Business Impact), Oct–Nov 2026.';
+const STATIONS=[
+{id:'door',name:'Front door',kick:'Station 1 · Where to open',title:'Location <em>mattered most</em>',
+ lede:'Level 1 put one shop in three places under identical news. The City Centre produced the highest profit of the locations tested; the low-rent Campus narrowly missed its target.',
+ chart:{title:'Five-year profit, Level 1 (target $500,000)',rows:[['City Centre',740214],['Suburb',662589],['University Campus',494089]],target:500000},
+ facts:['City Centre beat the Campus by $246,125 over five years.','The Campus missed by $5,911; a failed evening test cost about $20,600 that year.','Low rivalry and low rent could not make up for $1 vending machines and price-sensitive students.'],
+ note:'Location comparisons are descriptive: pay, training or promotion also differed slightly between these runs.',
+ anchor:[7.75,3.85,3.4],cam:[12.2,4.4,11.2],tgt:[6.9,1.9,3.9]},
+{id:'counter',name:'Counter & menu',kick:'Station 2 · Price with the economy',title:'Match rivals in a recession, <em>charge more in recovery</em>',
+ lede:'The menu board followed the news. In the Year 4 recession I matched competitors’ prices; in the Year 5 recovery I raised them.',
+ chart:{title:'Year 5 recovery: price rise vs volume change',rows:[['Mature price',14.3],['Mature volume',-5.2],['Emerging price',20],['Emerging volume',-4.7]],unit:'%'},
+ facts:['Recession: matching the market price lifted Level 1 drinks from 447 to 477 a day and Level 3 Mature drinks per store by 6.5%.','Recovery: volume fell proportionately less than prices rose, consistent with relatively inelastic demand.','A price below rivals was never tested.'],
+ note:'Market conditions changed at the same time, so these are not clean elasticity estimates.',
+ anchor:[0,4.75,-4.75],cam:[0.4,3.3,1.6],tgt:[0,2.4,-4.2]},
+{id:'staff',name:'Staff room',kick:'Station 3 · People',title:'Pay a little more, <em>keep training</em>',
+ lede:'The game links happy staff to happy customers. A modest pay lead kept staff at five stars; cutting training or holding an extra job did not pay.',
+ chart:{title:'Profit effect of each people decision',rows:[['$1,000 pay lead (not $2,000)',14359],['Promotion trimmed to $10,000',9718],['Training cut to $1,000',-6888],['One extra job kept 5 years',-122794]]},
+ facts:['Staff stayed at five stars with a $1,000 lead during the recession and recovery.','Cutting training saved $4,500 but lost more in sales (−$6,888).','An extra job lifted demand only in the year it was added.'],
+ note:'Paired runs with otherwise identical settings (Level 1 Runs 1, 4 and 5; Level 2 Runs 2 and 3).',
+ anchor:[4.9,3.7,-4.75],cam:[3.2,3.0,0.6],tgt:[4.9,2.0,-4.4]},
+{id:'roaster',name:'Roastery',kick:'Station 4 · Vertical integration',title:'Roast only where <em>customers notice</em>',
+ lede:'A $100,000 roaster saves only $0.05 a cup. It paid when customers valued the taste, and lost money where they did not.',
+ chart:{title:'Five-year profit effect of roasting own beans',rows:[['Level 2 · City Centre',134049],['Level 3 · Mature Markets',583995],['Level 3 · Emerging Markets',-157785]]},
+ facts:['In Level 2 the gain came from more customers ($194,237), not cheaper cups ($39,812), against $100,000 of depreciation.','Mature customers added about 20 drinks per store per day.','Rivals began roasting in Year 2, so the advantage was temporary.'],
+ note:'Level 3 effects compare Run 3 with Run 2, market by market.',
+ anchor:[5.6,3.25,-1.2],cam:[1.6,3.2,3.4],tgt:[5.4,1.4,-1.3]},
+{id:'beans',name:'Bean shelf',kick:'Station 5 · Sourcing',title:'Certified beans pay <em>when the label is trusted</em>',
+ lede:'Organic sourcing served the planet goal and profit together. Where Fair Trade labels were credible, combining both sold even more.',
+ chart:{title:'Profit effect of certified beans',rows:[['Organic beans, Level 2 (5 years)',49916],['Fair Trade + organic, Level 3 Year 1',46938]]},
+ facts:['Organic beans lifted sales 3.0–4.1% a year and returned about twice their cost.','Fair Trade + organic sold 5.6% more per Mature store than organic alone.','In Emerging Markets, where bean type did not matter to customers, I kept ordinary beans.'],
+ note:'Organic concerns production and the environment; Fair Trade concerns producer livelihoods and trading terms.',
+ anchor:[-4.6,4.35,-4.7],cam:[-3.6,3.3,1.4],tgt:[-4.6,2.5,-4.3]},
+{id:'map',name:'World map',kick:'Station 6 · Going international',title:'In a growing market, <em>start early</em>',
+ lede:'Level 3 built a chain across Mature and Emerging Markets. Each run kept what worked and tested one idea, lifting five-year profit from $10.64m to $12.50m.',
+ chart:{title:'Level 3 five-year profit by run ($m)',rows:[['Run 1 · baseline',10.64],['Run 2 · faster Emerging openings',11.59],['Run 3 · roast in Mature only',12.33],['Run 4 · roast everywhere',12.17],['Run 5 · extra Emerging store, Year 1',12.50]],money:'m',min:10},
+ facts:['Opening Emerging stores faster added $952,776, after trailing for two years (a J-curve).','One more Emerging store in Year 1 added $168,920.','Franchises earned $6.45m before shared costs in Run 5, with no capital needed.'],
+ note:'Earlier, faster expansion was the best of the schedules tested; a Year 5 Emerging opening was not tested.',
+ anchor:[-7.75,4.6,-0.4],cam:[-1.8,3.6,-0.2],tgt:[-7.6,3.2,-0.4]},
+{id:'board',name:'Results board',kick:'Station 7 · The scoreboard',title:'14 of 15 runs <em>beat the target</em>',
+ lede:'Five runs at each of three levels, treated as paired experiments. Each level ended at or near its best result.',
+ chart:{title:'Best run at each level, % of target',rows:[['Level 1 · one shop',152],['Level 2 · the brand',193],['Level 3 · international',250]],unit:'%',target:100},
+ facts:['Best results: $757,947 (Level 1), $963,581 (Level 2) and $12,501,031 (Level 3).','The only miss was the low-price Campus run (99% of target).','14 decision comparisons priced each choice in dollars.'],
+ note:'Where conditions were otherwise identical, paired runs isolate the tested change; four comparisons are descriptive.',
+ anchor:[-7.75,3.9,3.2],cam:[-2.4,3.0,4.6],tgt:[-7.6,2.6,3.2]},
+];
+const DEFAULT={cam:[12.5,10.5,13.5],tgt:[0,1.2,0]};
+
+/* ---------------- Chart helper (inline SVG) ---------------- */
+function chartSVG(c){
+ const W=340,rowH=34,pad=6,lab=146,w=W-lab-74,H=c.rows.length*rowH+pad;
+ const vals=c.rows.map(r=>r[1]);const lo=Math.min(0,c.min??Math.min(...vals));const hi=Math.max(...vals,c.target||0);
+ const base=c.min!=null?c.min:0;const x=v=>lab+(v-Math.min(base,lo))/(hi-Math.min(base,lo))*w;const x0=x(Math.max(base,0)>hi?hi:(base>0?base:0));
+ const fmt=v=>c.unit==='%'?(v>0&&c.unit&&c.rows.some(r=>r[1]<0)?'+':'')+v+'%':c.money==='m'?'$'+v.toFixed(2)+'m':(v<0?'−$':'+$')+Math.abs(v).toLocaleString('en-US');
+ let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${c.title}">`;
+ c.rows.forEach((r,i)=>{const y=i*rowH+pad,v=r[1];const xa=Math.min(x0,x(v)),xb=Math.max(x0,x(v));const col=v<0?'var(--loss)':'var(--gain)';
+  const lines=r[0].length>22?[r[0].slice(0,r[0].lastIndexOf(' ',22)),r[0].slice(r[0].lastIndexOf(' ',22)+1)]:[r[0]];
+  s+=lines.map((t,k)=>`<text x="0" y="${y+(lines.length>1?11+k*12:17)}" font-size="11.5" fill="#3d3731" font-family="DM Sans">${t}</text>`).join('');
+  s+=`<rect x="${xa}" y="${y+5}" width="${Math.max(2,xb-xa)}" height="16" rx="4" fill="${col}"/>`;
+  const lx=v<0?xa-4:xb+5;s+=`<text x="${lx}" y="${y+17.5}" font-size="11.5" font-weight="700" fill="#171513" text-anchor="${v<0?'end':'start'}" font-family="DM Sans">${fmt(v)}</text>`;});
+ s+=`<line x1="${x0}" x2="${x0}" y1="2" y2="${H}" stroke="#171513" stroke-width="1"/>`;
+ if(c.target){const xt=x(c.target);s+=`<line x1="${xt}" x2="${xt}" y1="0" y2="${H}" stroke="#b65f36" stroke-dasharray="3 3"/><text x="${xt+3}" y="${H-1}" font-size="9.5" fill="#b65f36" font-family="DM Sans">target</text>`}
+ return s+'</svg>';
+}
+
+/* ---------------- Panel + tour UI ---------------- */
+const $=s=>document.querySelector(s);let current=-1;
+const dots=$('#dots');STATIONS.forEach((st,i)=>{const b=document.createElement('button');b.textContent=i+1;b.title=st.name;b.setAttribute('aria-label',`Station ${i+1}: ${st.name}`);b.onclick=()=>go(i);dots.appendChild(b)});
+function fill(i){const s=STATIONS[i];$('#pKick').textContent=s.kick;$('#pTitle').innerHTML=s.title;$('#pLede').textContent=s.lede;
+ $('#pChart').innerHTML=`<h4>${s.chart.title}</h4>`+chartSVG(s.chart);$('#pFacts').innerHTML=s.facts.map(f=>`<li>${f}</li>`).join('');
+ $('#pNote').textContent=s.note+' '+SRC;$('#prev').disabled=false;$('#next').textContent=i===STATIONS.length-1?'Back to the start ↺':'Next stop →'}
+/* fallback (no WebGL) */
+function fallback(){$('#loader').classList.add('hide');$('#hint').style.display='none';document.querySelector('.dock').style.display='none';
+ $('#fallback').classList.add('show');$('#fbGrid').innerHTML=STATIONS.map(s=>`<article><div class="kick">${s.kick}</div><h2 style="font:600 24px 'Playfair Display',serif;margin:8px 0">${s.title}</h2><p class="lede">${s.lede}</p><div class="chart"><h4>${s.chart.title}</h4>${chartSVG(s.chart)}</div><ul class="facts">${s.facts.map(f=>`<li>${f}</li>`).join('')}</ul><p class="note">${s.note}</p></article>`).join('')}
+
+await Promise.race([Promise.all(['600 40px "Playfair Display"','italic 600 40px "Playfair Display"','500 40px "DM Sans"','700 40px "DM Sans"'].map(f=>document.fonts.load(f))),new Promise(r=>setTimeout(r,2500))]);
+let renderer;
+try{const t=document.createElement('canvas');if(!(t.getContext('webgl2')||t.getContext('webgl')))throw 0;
+ renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:false});}catch(e){fallback();throw new Error('no webgl')}
+
+/* ---------------- Scene ---------------- */
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.outputColorSpace=THREE.SRGBColorSpace;
+$('#stage').appendChild(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#1c1410');scene.fog=new THREE.Fog('#1c1410',26,48);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,0.1,100);camera.position.set(...(innerWidth<=760?DEFAULT.cam.map(v=>v*1.55):DEFAULT.cam));
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(...DEFAULT.tgt);controls.enableDamping=true;controls.dampingFactor=.08;
+controls.enablePan=false;controls.minDistance=3;controls.maxDistance=26;controls.minPolarAngle=.25;controls.maxPolarAngle=1.42;controls.autoRotateSpeed=.45;
+
+const M=(c,o={})=>new THREE.MeshStandardMaterial({color:c,roughness:o.r??.7,metalness:o.m??0,...(o.e?{emissive:o.e,emissiveIntensity:o.ei??1}:{}),...(o.map?{map:o.map}:{}),...(o.t?{transparent:true,opacity:o.t}:{})});
+function box(w,h,d,mat,x,y,z,parent=scene){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;parent.add(m);return m}
+function cyl(rt,rb,h,mat,x,y,z,seg=32,parent=scene){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat);m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;parent.add(m);return m}
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t}
+
+/* floor: oak planks */
+const floorTex=canvasTex(1024,1024,(g,w,h)=>{const cols=['#a87a52','#9c6f48','#b3855c','#946944','#a97c55'];const ph=64;
+ for(let y=0,r=0;y<h;y+=ph,r++){let x=-(r%3)*180;while(x<w){const L=260+((x*7+r*13)%140);g.fillStyle=cols[(r*3+Math.abs(x))%cols.length];g.fillRect(x,y,L,ph);
+  for(let k=0;k<6;k++){g.strokeStyle='rgba(60,35,15,.12)';g.beginPath();g.moveTo(x,y+8+k*9);g.bezierCurveTo(x+L*.3,y+4+k*9,x+L*.7,y+12+k*9,x+L,y+8+k*9);g.stroke()}
+  g.fillStyle='rgba(40,22,10,.55)';g.fillRect(x,y,2,ph);x+=L}g.fillStyle='rgba(40,22,10,.5)';g.fillRect(0,y,w,2)}});
+floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;floorTex.repeat.set(2.2,1.6);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(18,12),M('#ffffff',{map:floorTex,r:.55}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+/* rug */
+const rug=new THREE.Mesh(new THREE.PlaneGeometry(5.6,3.6),M('#ffffff',{map:canvasTex(512,330,(g,w,h)=>{g.fillStyle='#6c846f';g.fillRect(0,0,w,h);g.strokeStyle='#f0e5d6';g.lineWidth=10;g.strokeRect(20,20,w-40,h-40);g.lineWidth=3;g.strokeRect(38,38,w-76,h-76);g.fillStyle='#f0e5d6';for(let i=0;i<9;i++){g.beginPath();g.arc(70+i*46,h/2,6,0,7);g.fill()}}),r:.95}));
+rug.rotation.x=-Math.PI/2;rug.position.set(0,.01,1.9);rug.receiveShadow=true;scene.add(rug);
+
+/* walls */
+const wallTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#efe4d4';g.fillRect(0,0,w,h);for(let i=0;i<2500;i++){g.fillStyle=`rgba(120,90,60,${Math.random()*.04})`;g.fillRect(Math.random()*w,Math.random()*h,2,2)}});
+const wallM=M('#ffffff',{map:wallTex,r:.9});
+box(18,6,.25,wallM,0,3,-6.1);box(.25,6,12,wallM,-9.1,3,0);
+/* wainscot */
+const wain=M('#2f4a43',{r:.6});box(18,1.6,.12,wain,0,.8,-5.95);box(.12,1.6,12,wain,-8.95,.8,0);
+const rail=M('#c8a46a',{r:.35,m:.6});box(18,.07,.16,rail,0,1.62,-5.93);box(.16,.07,12,rail,-8.93,1.62,0);
+/* window on left wall */
+const winGlow=M('#fff1d6',{e:'#ffe9c4',ei:1.25});
+const win=new THREE.Group();win.position.set(-8.95,3.3,-3.6);scene.add(win);
+box(.06,2.2,2.6,winGlow,0,0,0,win);const frameM=M('#2a1d17',{r:.5});
+for(const z of[-1.32,0,1.32])box(.14,2.36,.08,frameM,.05,0,z,win);for(const y of[-1.14,0,1.14])box(.14,.08,2.72,frameM,.05,y,0,win);
+const sun=new THREE.SpotLight('#ffe2b8',60,22,.55,.6,1.2);sun.position.set(-8.6,5.8,-3.6);sun.target.position.set(-2,0,-1.6);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun,sun.target);
+
+/* lights */
+scene.add(new THREE.HemisphereLight('#fff4e4','#3b2a20',1.1));
+const key=new THREE.DirectionalLight('#ffe7cc',1.6);key.position.set(8,14,9);key.castShadow=true;key.shadow.mapSize.set(2048,2048);
+Object.assign(key.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:40});key.shadow.bias=-.0004;scene.add(key);
+
+/* pendant lamps */
+function lamp(x,z){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ cyl(.012,.012,1.6,M('#222'),0,5.2,0,6,g);const shade=cyl(.12,.42,.36,M('#b65f36',{r:.4,m:.3}),0,4.25,0,40,g);shade.castShadow=false;
+ const bulb=new THREE.Mesh(new THREE.SphereGeometry(.1,16,16),M('#fff',{e:'#ffd9a0',ei:3}));bulb.position.set(0,4.05,0);g.add(bulb);
+ const p=new THREE.PointLight('#ffcf94',7,7,1.6);p.position.set(0,3.95,0);g.add(p)}
+lamp(-2.6,1.6);lamp(2.4,1.9);lamp(0,-3.2);
+
+/* ---- Station 2: counter, espresso machine, menu board ---- */
+const wood=M('#5a3a26',{r:.55}),wood2=M('#3a261a',{r:.6}),marble=M('#f3eee6',{r:.25}),brass=M('#c8a46a',{r:.25,m:.85}),steel=M('#cfd4d8',{r:.2,m:.9}),black=M('#1f1a17',{r:.4,m:.3});
+box(7.2,1.25,1.2,wood,0,.62,-4.9);box(7.4,.08,1.34,marble,0,1.29,-4.9);
+for(let i=-3;i<=3;i++)box(.04,1.1,.02,brass,i*1.0,.62,-4.29);
+const em=new THREE.Group();em.position.set(-1.6,1.33,-5.05);scene.add(em);
+box(1.3,.8,.66,steel,0,.4,0,em);box(1.34,.08,.7,black,0,.82,0,em);box(1.1,.12,.5,black,0,.06,.1,em);
+for(const x of[-.35,.35]){const gh=cyl(.08,.08,.18,black,x,.5,.4,24,em);gh.rotation.x=Math.PI/2;cyl(.05,.05,.16,steel,x,.3,.42,16,em)}
+for(let i=0;i<5;i++){const c=cyl(.07,.06,.08,M('#fbf8f2',{r:.3}),-.45+i*.22,.9,.05,20,em)}
+/* grinder */
+const gr=new THREE.Group();gr.position.set(-.3,1.33,-5.1);scene.add(gr);cyl(.2,.24,.5,black,0,.25,0,24,gr);const hop=cyl(.22,.1,.4,M('#3b2a20',{t:.55,r:.1}),0,.72,0,24,gr);
+/* latte cups on counter with heart art */
+const latteTex=canvasTex(256,256,(g,w,h)=>{const r=g.createRadialGradient(110,100,10,128,128,128);r.addColorStop(0,'#c88a52');r.addColorStop(.6,'#a7642f');r.addColorStop(1,'#6e3c19');g.fillStyle=r;g.beginPath();g.arc(128,128,128,0,7);g.fill();
+ g.fillStyle='#fdf6ea';g.beginPath();g.moveTo(128,190);g.bezierCurveTo(40,130,60,60,128,95);g.bezierCurveTo(196,60,216,130,128,190);g.fill();g.fillRect(126,186,4,40)});
+function cup(x,z,parent=scene,y=1.33,s=1){const g=new THREE.Group();g.position.set(x,y,z);g.scale.setScalar(s);parent.add(g);
+ const sau=cyl(.22,.18,.03,M('#fbf8f2',{r:.25}),0,.015,0,40,g);cyl(.14,.1,.16,M('#fbf8f2',{r:.25}),0,.11,0,40,g);
+ const top=new THREE.Mesh(new THREE.CircleGeometry(.125,40),M('#ffffff',{map:latteTex,r:.5}));top.rotation.x=-Math.PI/2;top.position.y=.185;g.add(top);
+ const h=new THREE.Mesh(new THREE.TorusGeometry(.05,.014,10,20,Math.PI*1.3),M('#fbf8f2',{r:.25}));h.position.set(.15,.12,0);h.rotation.z=-.6;g.add(h);return g}
+cup(.9,-4.6);cup(1.6,-4.7);cup(2.3,-4.55);
+/* pastry dome */
+cyl(.32,.32,.05,wood2,3.0,1.36,-4.8);const dome=new THREE.Mesh(new THREE.SphereGeometry(.32,24,16,0,Math.PI*2,0,Math.PI/2),M('#ffffff',{t:.25,r:.05}));dome.position.set(3.0,1.38,-4.8);scene.add(dome);
+for(let i=0;i<4;i++){const b=new THREE.Mesh(new THREE.TorusGeometry(.07,.035,10,20),M('#c98a4b',{r:.7}));b.rotation.x=Math.PI/2;b.position.set(2.88+(i%2)*.22,1.42,-4.88+(i>>1)*.18);scene.add(b)}
+/* menu board */
+const menuTex=canvasTex(1024,600,(g,w,h)=>{g.fillStyle='#1f2a26';g.fillRect(0,0,w,h);for(let i=0;i<4000;i++){g.fillStyle=`rgba(255,255,255,${Math.random()*.025})`;g.fillRect(Math.random()*w,Math.random()*h,2,2)}
+ g.fillStyle='#f1e6d6';g.font='600 64px "Playfair Display",serif';g.textAlign='center';g.fillText('Menu & the economy',w/2,90);
+ g.strokeStyle='#d99857';g.lineWidth=3;g.beginPath();g.moveTo(260,115);g.lineTo(w-260,115);g.stroke();
+ g.textAlign='left';g.font='500 38px "DM Sans",sans-serif';const rows=[['Year 1 · strong economy','$3.50'],['Year 2 · tariffs','$3.75'],['Year 3 · slowing','$3.75'],['Year 4 · recession (match rivals)','$3.50'],['Year 5 · recovery','$4.00']];
+ rows.forEach((r,i)=>{const y=190+i*76;g.fillStyle=i===3?'#d99857':'#f1e6d6';g.fillText(r[0],80,y);g.textAlign='right';g.fillText(r[1],w-80,y);g.textAlign='left';g.strokeStyle='rgba(241,230,214,.25)';g.setLineDash([4,8]);g.beginPath();g.moveTo(80,y+18);g.lineTo(w-80,y+18);g.stroke();g.setLineDash([])})});
+box(4.3,2.55,.1,wood2,0,4.1,-5.95);const menu=new THREE.Mesh(new THREE.PlaneGeometry(4.05,2.35),M('#ffffff',{map:menuTex,r:.9}));menu.position.set(0,4.1,-5.89);scene.add(menu);
+
+/* ---- Station 3: staff door ---- */
+box(1.5,3.1,.12,M('#2f4a43',{r:.55}),4.9,1.55,-5.95);box(1.72,.14,.2,wood2,4.9,3.17,-5.92);box(.12,3.2,.2,wood2,4.08,1.6,-5.92);box(.12,3.2,.2,wood2,5.72,1.6,-5.92);
+const knob=new THREE.Mesh(new THREE.SphereGeometry(.07,16,16),brass);knob.position.set(5.4,1.5,-5.84);scene.add(knob);
+const staffSign=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.4),M('#ffffff',{map:canvasTex(440,160,(g,w,h)=>{g.fillStyle='#f0e5d6';g.fillRect(0,0,w,h);g.fillStyle='#211611';g.font='700 56px "DM Sans",sans-serif';g.textAlign='center';g.fillText('STAFF',w/2,104)})}));
+staffSign.position.set(4.9,2.6,-5.88);scene.add(staffSign);
+/* aprons on hooks */
+for(const [x,c] of [[6.35,'#b65f36'],[6.85,'#6c846f']]){box(.05,.05,.12,brass,x,2.9,-5.9);const a=new THREE.Mesh(new THREE.PlaneGeometry(.42,.9),M(c,{r:.9}));a.position.set(x,2.42,-5.87);scene.add(a)}
+/* five-star plaque */
+const starTex=canvasTex(512,160,(g,w,h)=>{g.fillStyle='#211611';g.fillRect(0,0,w,h);g.fillStyle='#d99857';g.font='64px serif';g.textAlign='center';g.fillText('★★★★★',w/2,92);g.fillStyle='#f0e5d6';g.font='600 26px "DM Sans",sans-serif';g.fillText('STAFF SATISFACTION',w/2,138)});
+const plq=new THREE.Mesh(new THREE.PlaneGeometry(1.3,.4),M('#ffffff',{map:starTex}));plq.position.set(6.6,3.55,-5.88);scene.add(plq);
+
+/* ---- Station 4: roaster ---- */
+const copper=M('#b8693d',{r:.3,m:.8}),cast=M('#2b2522',{r:.5,m:.5});
+const ro=new THREE.Group();ro.position.set(5.6,0,-1.4);ro.rotation.y=-.5;scene.add(ro);
+box(1.6,.9,1.1,cast,0,.45,0,ro);const drum=cyl(.62,.62,1.3,copper,0,1.55,0,40,ro);drum.rotation.z=Math.PI/2;
+for(const x of[-.66,.66]){const r=new THREE.Mesh(new THREE.TorusGeometry(.62,.05,12,40),brass);r.rotation.y=Math.PI/2;r.position.set(x,1.55,0);ro.add(r)}
+const face=cyl(.5,.5,.06,M('#3b2a20',{t:.8,r:.1}),.7,1.55,0,40,ro);face.rotation.z=Math.PI/2;
+cyl(.45,.12,.6,copper,0,2.55,0,32,ro);cyl(.1,.1,1.8,black,-.35,2.9,-.3,16,ro);
+const tray=cyl(.85,.85,.12,steel,1.25,.95,.25,48,ro);
+const beanGeo=new THREE.SphereGeometry(.035,8,6);beanGeo.scale(1.3,.7,.9);const beanM=M('#5a3420',{r:.5});
+const beans=new THREE.InstancedMesh(beanGeo,beanM,180);const dm=new THREE.Object3D();
+for(let i=0;i<180;i++){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*.75;dm.position.set(1.25+Math.cos(a)*r,1.03+Math.random()*.03,.25+Math.sin(a)*r);dm.rotation.set(Math.random()*3,Math.random()*3,0);dm.updateMatrix();beans.setMatrixAt(i,dm.matrix)}
+beans.castShadow=true;ro.add(beans);
+/* sacks */
+for(const [x,z,s] of[[7.3,.2,1],[6.8,.95,.85]]){const sk=new THREE.Mesh(new THREE.CylinderGeometry(.42*s,.5*s,.95*s,14,1),M('#c9b48c',{r:1}));sk.position.set(x,.47*s,z);sk.castShadow=true;scene.add(sk);
+ const tie=cyl(.18*s,.3*s,.25*s,M('#c9b48c',{r:1}),x,.95*s+.08,z,14)}
+
+/* ---- Station 5: bean shelves ---- */
+for(const y of[2.3,3.2,4.1])box(3.2,.08,.5,wood2,-4.6,y,-5.72);
+for(const x of[-6.1,-3.1])box(.08,2.2,.5,wood2,x,3.2,-5.72);
+const jarCols=['#6f8a4e','#a7642f','#3b2a20','#c9b48c','#6c846f','#8a5531'];
+for(const y of[2.3,3.2,4.1])for(let i=0;i<6;i++){const x=-5.75+i*.46;const j=cyl(.14,.14,.42,M('#e9f0ef',{t:.45,r:.08}),x,y+.25,-5.68,24);
+ cyl(.125,.125,.3,M(jarCols[(i+y*3|0)%6],{r:.8}),x,y+.2,-5.68,20);cyl(.15,.15,.06,brass,x,y+.48,-5.68,24)}
+const labelTex=canvasTex(512,120,(g,w,h)=>{g.fillStyle='#f0e5d6';g.fillRect(0,0,w,h);g.fillStyle='#2f4a43';g.font='700 40px "DM Sans",sans-serif';g.textAlign='center';g.fillText('ORGANIC · FAIR TRADE',w/2,76)});
+const lab=new THREE.Mesh(new THREE.PlaneGeometry(2.4,.42),M('#ffffff',{map:labelTex}));lab.position.set(-4.6,4.75,-5.93);scene.add(lab);
+
+/* ---- Station 6: world map ---- */
+const mapTex=canvasTex(1400,900,(g,w,h)=>{g.fillStyle='#f3ead9';g.fillRect(0,0,w,h);
+ const land=[[[.08,.22],[.30,.18],[.36,.32],[.28,.46],[.22,.48],[.16,.40],[.08,.33]],[[.24,.52],[.32,.55],[.34,.72],[.28,.88],[.24,.70]],[[.44,.18],[.58,.14],[.62,.26],[.52,.32],[.45,.30]],[[.46,.36],[.58,.36],[.62,.52],[.56,.72],[.50,.62],[.45,.46]],[[.60,.16],[.86,.18],[.92,.34],[.80,.46],[.70,.44],[.62,.30]],[[.80,.62],[.92,.64],[.90,.76],[.80,.74]]];
+ for(let y=30;y<h-20;y+=22)for(let x=30;x<w-20;x+=22){const px=x/w,py=y/h;let inside=false;for(const poly of land){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const [xi,yi]=poly[i],[xj,yj]=poly[j];if(((yi>py)!=(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))c=!c}if(c){inside=true;break}}
+  if(inside){g.fillStyle='#b9a98f';g.beginPath();g.arc(x,y,6.5,0,7);g.fill()}}
+ const pin=(x,y,col,n)=>{for(let k=0;k<n;k++){const a=k*2.4,r=8+k*3.2;g.fillStyle=col;g.beginPath();g.arc(x*w+Math.cos(a)*r,y*h+Math.sin(a)*r,8,0,7);g.fill()}};
+ pin(.20,.30,'#2f6f9f',13);pin(.52,.22,'#2f6f9f',13);pin(.55,.50,'#b65f36',13);pin(.76,.34,'#b65f36',13);
+ g.fillStyle='#211611';g.font='600 58px "Playfair Display",serif';g.fillText('Level 3 · going international',50,h-70);
+ g.font='500 32px "DM Sans",sans-serif';g.fillStyle='#2f6f9f';g.fillText('● Mature markets',50,h-22);g.fillStyle='#b65f36';g.fillText('● Emerging markets',380,h-22);
+ g.fillStyle='#211611';g.textAlign='right';g.font='700 44px "DM Sans",sans-serif';g.fillText('$10.64m → $12.50m',w-50,h-30)});
+box(.12,3.1,4.6,wood2,-8.98,3.6,-.4);const map=new THREE.Mesh(new THREE.PlaneGeometry(4.35,2.85),M('#ffffff',{map:mapTex,r:.9}));map.rotation.y=Math.PI/2;map.position.set(-8.9,3.6,-.4);scene.add(map);
+
+/* ---- Station 7: results chalkboard ---- */
+const boardTex=canvasTex(800,1000,(g,w,h)=>{g.fillStyle='#22302b';g.fillRect(0,0,w,h);for(let i=0;i<5000;i++){g.fillStyle=`rgba(255,255,255,${Math.random()*.03})`;g.fillRect(Math.random()*w,Math.random()*h,2,2)}
+ g.fillStyle='#f1e6d6';g.textAlign='center';g.font='600 60px "Playfair Display",serif';g.fillText("Today's results",w/2,110);
+ g.font='700 230px "Playfair Display",serif';g.fillStyle='#d99857';g.fillText('14/15',w/2,380);g.font='500 40px "DM Sans",sans-serif';g.fillStyle='#f1e6d6';g.fillText('runs beat the profit target',w/2,450);
+ const rows=[['Level 1','152%'],['Level 2','193%'],['Level 3','250%']];rows.forEach((r,i)=>{const y=600+i*110;g.textAlign='left';g.font='500 52px "DM Sans",sans-serif';g.fillText(r[0],110,y);g.textAlign='right';g.font='700 60px "DM Sans",sans-serif';g.fillStyle='#d99857';g.fillText(r[1],w-110,y);g.fillStyle='#f1e6d6'});
+ g.textAlign='center';g.font='italic 34px "Playfair Display",serif';g.fillText('best run at each level',w/2,h-60)});
+box(.12,3.0,2.5,wood,-8.98,2.9,3.2);const board=new THREE.Mesh(new THREE.PlaneGeometry(2.25,2.78),M('#ffffff',{map:boardTex,r:.95}));board.rotation.y=Math.PI/2;board.position.set(-8.9,2.9,3.2);scene.add(board);
+
+/* ---- Station 1: front door with location signs ---- */
+const door=new THREE.Group();door.position.set(7.9,0,3.4);door.rotation.y=-Math.PI/2;scene.add(door);
+box(.18,3.4,.25,wood2,-1.0,1.7,0,door);box(.18,3.4,.25,wood2,1.0,1.7,0,door);box(2.2,.2,.25,wood2,0,3.45,0,door);
+box(.95,3.2,.06,M('#e9f0ef',{t:.28,r:.05}),-.48,1.6,0,door);box(.95,3.2,.06,M('#e9f0ef',{t:.28,r:.05}),.48,1.6,0,door);
+const openTex=canvasTex(400,160,(g,w,h)=>{g.fillStyle='#b65f36';g.beginPath();g.roundRect(6,6,w-12,h-12,30);g.fill();g.fillStyle='#fff';g.font='700 84px "DM Sans",sans-serif';g.textAlign='center';g.fillText('OPEN',w/2,112)});
+const op=new THREE.Mesh(new THREE.PlaneGeometry(.8,.32),M('#ffffff',{map:openTex,e:'#ffffff',ei:.25,emissiveMap:openTex}));op.position.set(-.48,2.3,-.05);op.rotation.y=Math.PI;door.add(op);
+/* signpost with three locations */
+const post=new THREE.Group();post.position.set(6.1,0,5.1);scene.add(post);cyl(.06,.06,3.2,wood2,0,1.6,0,12,post);
+[['CITY CENTRE  $740,214','#2f6f9f',2.75,.55],['SUBURB  $662,589','#6c846f',2.25,.85],['CAMPUS  $494,089','#c2502f',1.75,1.1]].forEach(([t,c,y,r])=>{
+ const tx=canvasTex(640,120,(g,w,h)=>{g.fillStyle=c;g.beginPath();g.moveTo(0,0);g.lineTo(w-60,0);g.lineTo(w,h/2);g.lineTo(w-60,h);g.lineTo(0,h);g.fill();g.fillStyle='#fff';g.font='700 46px "DM Sans",sans-serif';g.fillText(t,24,78)});
+ const s=new THREE.Mesh(new THREE.BoxGeometry(1.8,.34,.05),[M(c),M(c),M(c),M(c),M('#ffffff',{map:tx}),M('#ffffff',{map:tx})]);s.position.set(.75,y,0);s.castShadow=true;
+ const pv=new THREE.Group();pv.position.y=0;pv.rotation.y=r;pv.add(s);post.add(pv)});
+
+/* ---- Seating: tables, chairs, cups ---- */
+function table(x,z,rot=0){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);
+ cyl(.62,.62,.06,marble,0,1.05,0,48,g);cyl(.05,.05,1,black,0,.52,0,12,g);cyl(.3,.34,.05,black,0,.03,0,24,g);
+ for(const a of[0,Math.PI]){const c=new THREE.Group();c.position.set(Math.cos(a)*1.05,0,Math.sin(a)*1.05);c.rotation.y=-a+Math.PI/2;g.add(c);
+  box(.55,.06,.55,wood,0,.62,0,c);for(const[dx,dz]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22]])box(.04,.6,.04,black,dx,.3,dz,c);
+  box(.55,.6,.05,wood,0,.95,.25,c)}
+ return g}
+const t1=table(-2.6,1.6,.3),t2=table(2.4,2.1,-.4);cup(-.15,.05,t1,1.08);cup(.2,-.1,t2,1.08);
+/* plants */
+function plant(x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);cyl(.32,.25,.6,M('#c4683f',{r:.8}),0,.3,0,24,g);
+ const lm=M('#4d6b45',{r:.85});for(let i=0;i<9;i++){const l=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),lm);l.scale.set(1,.55,.45);l.position.set(Math.cos(i*.7)*.25,.75+i*.12,Math.sin(i*.7)*.25);l.rotation.set(.4,i,.6);l.castShadow=true;g.add(l)}}
+plant(-8.2,-5.3,1.1);plant(-8.1,5,1.25);plant(7.6,-5.2,1);
+
+/* ---- Steam ---- */
+const steamTex=canvasTex(128,256,(g,w,h)=>{const r=g.createLinearGradient(0,0,0,h);r.addColorStop(0,'rgba(255,255,255,0)');r.addColorStop(.5,'rgba(255,255,255,.55)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.beginPath();g.moveTo(w/2,0);g.bezierCurveTo(0,h*.3,w,h*.6,w/2,h);g.lineWidth=26;g.strokeStyle=r;g.stroke()});
+const steams=[];function steam(x,y,z){for(let k=0;k<2;k++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:steamTex,transparent:true,depthWrite:false,opacity:.5}));s.scale.set(.22,.5,1);s.position.set(x,y,z);s.userData={x,y,z,o:k*.5};scene.add(s);steams.push(s)}}
+steam(.9,1.75,-4.6);steam(1.6,1.75,-4.7);steam(2.3,1.75,-4.55);steam(-2.6,1.55,1.6);steam(2.4,1.55,2.1);
+
+/* ---------------- Pins ---------------- */
+const pins=STATIONS.map((s,i)=>{const b=document.createElement('button');b.className='pin';b.innerHTML=`<span class="n">${i+1}</span><span class="t">${s.name}</span>`;b.setAttribute('aria-label',`Station ${i+1}: ${s.name}`);b.onclick=()=>go(i);document.body.appendChild(b);return{b,v:new THREE.Vector3(...s.anchor)}});
+
+/* ---------------- Camera moves ---------------- */
+let tween=null,lastInput=performance.now(),offX=0,offY=0;const mob=()=>innerWidth<=760;
+const offTarget=()=>current<0?[0,0]:mob()?[0,0]:[Math.min(230,innerWidth*.16),0];
+function fly(cam,tgt,dur=1500){if(RM){camera.position.set(...cam);controls.target.set(...tgt);return}
+ tween={t0:performance.now(),dur,pc:camera.position.clone(),pt:controls.target.clone(),cc:new THREE.Vector3(...cam),ct:new THREE.Vector3(...tgt)}}
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function mobileAdjust(cam,tgt,dy=2.1){if(!mob())return[cam,tgt];const c=new THREE.Vector3(...cam),t=new THREE.Vector3(...tgt);const d=c.clone().sub(t);c.add(d.multiplyScalar(.3));c.y+=.8;return[c.toArray(),[tgt[0],tgt[1]-dy,tgt[2]]]}
+const homeView=()=>{if(!mob())return[DEFAULT.cam,DEFAULT.tgt];const c=new THREE.Vector3(...DEFAULT.cam).multiplyScalar(1.55);return[c.toArray(),DEFAULT.tgt]};
+function go(i){current=i;fill(i);$('#pScroll').scrollTop=0;$('#panel').classList.add('open');const[c,t]=mobileAdjust(STATIONS[i].cam,STATIONS[i].tgt,[2.1,0.7,2.1,2.1,1.6,1.4,2.1][i]);fly(c,t);
+ [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));pins.forEach((p,k)=>p.b.classList.toggle('on',k===i));$('#tour').textContent='Restart tour';controls.autoRotate=false;lastInput=performance.now()}
+function freeLook(){current=-1;$('#panel').classList.remove('open');[...dots.children].forEach(d=>d.classList.remove('on'));pins.forEach(p=>p.b.classList.remove('on'));fly(...homeView());lastInput=performance.now()}
+$('#next').onclick=()=>current>=STATIONS.length-1?go(0):go(current+1);$('#prev').onclick=()=>go(current<=0?STATIONS.length-1:current-1);
+$('#close').onclick=freeLook;$('#free').onclick=freeLook;$('#tour').onclick=()=>go(0);
+addEventListener('keydown',e=>{if(e.key==='ArrowRight')$('#next').click();else if(e.key==='ArrowLeft'&&current>=0)$('#prev').click();else if(e.key==='Escape')freeLook()});
+controls.addEventListener('start',()=>{lastInput=performance.now();tween=null;controls.autoRotate=false;$('#hint').style.opacity=0});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;offX=-1;offY=-1;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+/* ---------------- Loop ---------------- */
+const tmp=new THREE.Vector3();
+function frame(now){
+ if(tween){const p=Math.min(1,(now-tween.t0)/tween.dur),e=ease(p);camera.position.lerpVectors(tween.pc,tween.cc,e);controls.target.lerpVectors(tween.pt,tween.ct,e);if(p>=1)tween=null}
+ if(!RM&&current<0&&!tween&&now-lastInput>7000)controls.autoRotate=true;
+ controls.update();
+ const [tx,ty]=offTarget();if(Math.abs(offX-tx)>.5||Math.abs(offY-ty)>.5){const k=RM?1:.08;offX+=(tx-offX)*k;offY+=(ty-offY)*k;camera.setViewOffset(innerWidth,innerHeight,offX,offY,innerWidth,innerHeight)}
+ const T=now/1000;steams.forEach(s=>{const u=((T*.35+s.userData.o)%1);s.position.set(s.userData.x+Math.sin(T*1.5+s.userData.o*6)*.03,s.userData.y+u*.45,s.userData.z);s.material.opacity=Math.sin(u*Math.PI)*.45});
+ drum.rotation.x=RM?0:T*.8;
+ renderer.render(scene,camera);
+ pins.forEach(p=>{tmp.copy(p.v).project(camera);const vis=tmp.z<1&&Math.abs(tmp.x)<1.05&&Math.abs(tmp.y)<1.05;p.b.style.display=vis?'flex':'none';
+  if(vis)p.b.style.transform=`translate(${(tmp.x*.5+.5)*innerWidth}px,${(-tmp.y*.5+.5)*innerHeight}px) translate(-17px,-17px)`});
+ requestAnimationFrame(frame)}
+requestAnimationFrame(frame);setTimeout(()=>$('#loader').classList.add('hide'),500);
+</script>
+</body>
+</html>
