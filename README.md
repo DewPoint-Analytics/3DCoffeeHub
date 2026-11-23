@@ -27,6 +27,8 @@ Every corner of the café holds one finding from my Coffee Shop Inc. simulation 
 
 Drag to look around, scroll or pinch to zoom, and use the arrow keys to move between stations.
 
+**The design** takes its cue from Hyderabad's Qutb Shahi heritage architecture: ogee arches with layered white mouldings, a row of small pink-lined niches above a diamond band, ochre-and-white checkered floors with mosaic borders, a central rosewood island under a stepped wooden frame and drum lanterns, rosewood armchairs with floral cushions, and banana-leaf plants in sage pots.
+
 ## 🧪 Method, briefly
 
 - Every figure comes from the game's own result screens. Nothing is estimated.
